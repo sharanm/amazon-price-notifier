@@ -51,7 +51,7 @@ def filterJobs(jobs, os=None, cpu=None, module=None):
 
 def _getSubmissionString():
 	currentTime = datetime.datetime.now()
-	delta = datetime.timedelta(days=2)
+	delta = datetime.timedelta(days=5)
 	cutoffTime = currentTime - delta
 
 	def getDateString(time):
@@ -85,6 +85,7 @@ def getOlderJobs(*args, **kwargs):
 	for job in jobs:
 		jobList.append(Job(job[0], job[10], job[9], job[8]))
 
+	jobList.reverse()
 	return jobList
 
 
@@ -103,9 +104,13 @@ def triggerJobs(jobs, machine, onlyDisplay=False):
 
 	for job in jobs:
 
-		command = "vrlsubmit -s ausvrl -u smundhada -z {build} -o {os} -t {module}_stage -c {cpu} -n 'Older job link: {link}'".format(
+		module = job.module
+		if not module.endswith("stage"):
+			module = "{}_stage".format(module)
+
+		command = "vrlsubmit -s ausvrl -u smundhada -z {build} -o {os} -t {module} -c {cpu} -p 4 -n 'Non module branches Older job link: {link}'".format(
 																											build=job.getBuildURL(),
-																											module=job.module,
+																											module=module,
 																											os=job.os,
 																											cpu=job.cpu,
 																											link=job.link)
@@ -114,12 +119,13 @@ def triggerJobs(jobs, machine, onlyDisplay=False):
 			command += " -m {}".format(machine)
 
 		if not onlyDisplay:
-			try:
-				out = subprocess.check_output(command, shell=True)
+			p = subprocess.Popen(command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+			out, err = p.communicate()
+			if "fail" not in out:
 				newJobLink = out.replace("Submission accepted as job(s) ", VRL_JOB_PREFIX)
 				print "Triggered : {} ".format(newJobLink)
-			except Exception, e:
-				print "Error occurred while triggering job {}. Ensure that build is available".format(command)
+			else:
+				print "Error: {} \n Command: {}".format(out, command)
 		else:
 			print command
 
