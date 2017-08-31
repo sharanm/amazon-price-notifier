@@ -30,6 +30,13 @@ logger.addHandler(handler)
 
 logging.getLogger("urllib").setLevel(logging.WARNING)
 
+def addattr():
+	pass
+
+def formatTime(timeStr):
+	timeObj = datetime.datetime.strptime(timeStr, "%Y-%m-%d %H:%M:%S.%f")
+	return "{}-{}-{}".format(timeObj.day, timeObj.month, timeObj.year)
+
 def notify(book):
 	previousPrice = execute("SELECT price from BookPrice where id = '{}' order by datetime(date) DESC LIMIT 1;".format(book.id))
 	if previousPrice:
@@ -49,6 +56,15 @@ def notify(book):
 			if change > 8:
 				pushMessage(book.name, "{}: from {} to {} \nChange of {:0.2f} %".format(
 						message, previousPrice, currentPrice, change))
+				pushMessage("Past Prices", "{}".format(pastPrices(book)))
+
+def pastPrices(book):
+	output = execute("select price, max(date) from bookprice where id='{}' group by price order by price ASC LIMIT 5;".format(book.id))
+	message = ""
+	for (price, date) in output:
+		message += ("{}: {}\n".format(formatTime(date), price))
+
+	return message
 
 def textToImage(text):
 	from PIL import Image, ImageDraw
@@ -86,18 +102,21 @@ def tweet(title, message):
 	except Exception, e:
 		logger.exception(e)
 
-def pushMessage(title, message):
+def pushBullet(title, message):
 	try:
-		logger.info("{}\n{}".format(title, message))
 		from pushbullet.pushbullet import PushBullet
 		apiKey = "o.mKznlsIJB18uq6qArGrl2AOPU2KbISsR"
 		p = PushBullet(apiKey)
 		# Get a list of devices
 		devices = p.getDevices()
 		p.pushNote(devices[0]["iden"], title, message)
-		tweet(title, message)
 	except Exception, e:
 		logger.exception(e)
+
+def pushMessage(title, message):
+	logger.info("{}\n{}".format(title, message))
+	pushBullet(title, message)
+	tweet(title, message)
 
 class Book:
 	def __init__(self, name, price, address):
@@ -225,5 +244,9 @@ if __name__ == '__main__':
 	#tweet("foo\nfoo", "bar")
 	#textToImage("foo\nbar")
 	#notify()
+	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; print pastPrices(addattr)
+	#print pushMessage("Past prices", pastPrices(addattr))
+	#print formatTime("2017-08-31 15:10:43.275887")
+	#pushMessage("foo", "car")
 	cli()
 
