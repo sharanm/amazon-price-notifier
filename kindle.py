@@ -39,15 +39,14 @@ def notify(book):
 		currentPrice = float(book.price)
 
 		if currentPrice != previousPrice:
-			logger.info("Notifying price change for {}".format(book.name))
-
 			if currentPrice < previousPrice:
 				message = "Price fall"
 			else:
 				message = "Price rise"
 
 			change = (abs(currentPrice - previousPrice) * 100 )/previousPrice
-			if change > 10:
+			logger.info("Price change of {} seen for {}\n".format(change, book.name))
+			if change > 8:
 				pushMessage(book.name, "{}: from {} to {} \nChange of {:0.2f} %".format(
 						message, previousPrice, currentPrice, change))
 
@@ -65,27 +64,31 @@ def textToImage(text):
 	return "foo.png"
 
 def tweet(title, message):
-	import tweepy
-	consumer_key = 'ipwbeVvBGXzaRr29nhmJSWvhD'
-	consumer_secret = 'hQ7u5MSJ9rSzYAlHVmGO3xF3YyxHg5o1nMSGj3CSiAA0UFNv8m'
-	access_token = '1010659086-wk48LIpu3PCghvnckTCjm01QrautNkr3B5VeOyZ'
-	access_token_secret = '5tJM0aSJenAaqMplSOYZM83UHMNtIhJXRTUfxGZx7CVQP'
-	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-	auth.set_access_token(access_token, access_token_secret)
-	api = tweepy.API(auth)
+	try:
+		import tweepy
+		consumer_key = 'ipwbeVvBGXzaRr29nhmJSWvhD'
+		consumer_secret = 'hQ7u5MSJ9rSzYAlHVmGO3xF3YyxHg5o1nMSGj3CSiAA0UFNv8m'
+		access_token = '1010659086-wk48LIpu3PCghvnckTCjm01QrautNkr3B5VeOyZ'
+		access_token_secret = '5tJM0aSJenAaqMplSOYZM83UHMNtIhJXRTUfxGZx7CVQP'
+		auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+		auth.set_access_token(access_token, access_token_secret)
+		api = tweepy.API(auth)
 
-	if len(title + message) < 160:
-		# prioritize message over title
-		if len(title) > 130 - len(message):
-			title = title[0: 130 - len(message)] + "..."
-		api.update_status("{}\n{}".format(title, message))
-	else:
-		message = "{}\n{}".format(title, message)
-		img = textToImage(message)
-		api.update_with_media(img, status="Img")
+		if len(title + message) < 160:
+			# prioritize message over title
+			if len(title) > 130 - len(message):
+				title = title[0: 130 - len(message)] + "..."
+			api.update_status("{}\n{}".format(title, message))
+		else:
+			message = "{}\n{}".format(title, message)
+			img = textToImage(message)
+			api.update_with_media(img, status="Img")
+	except Exception, e:
+		logger.exception(e)
 
 def pushMessage(title, message):
 	try:
+		logger.info("{}\n{}".format(title, message))
 		from pushbullet.pushbullet import PushBullet
 		apiKey = "o.mKznlsIJB18uq6qArGrl2AOPU2KbISsR"
 		p = PushBullet(apiKey)
@@ -221,5 +224,6 @@ if __name__ == '__main__':
 	#tweet("foo\n"*80, "bar")
 	#tweet("foo\nfoo", "bar")
 	#textToImage("foo\nbar")
+	#notify()
 	cli()
 
