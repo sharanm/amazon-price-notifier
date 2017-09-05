@@ -6,6 +6,7 @@ import random
 import time
 import hashlib
 import sqlite3
+import subprocess
 
 
 import logging
@@ -37,6 +38,22 @@ def formatTime(timeStr):
 	timeObj = datetime.datetime.strptime(timeStr, "%Y-%m-%d %H:%M:%S.%f")
 	return "{}-{}-{}".format(timeObj.day, timeObj.month, timeObj.year)
 
+def plot(book):
+	try:
+		output = execute("select price, max(date) from bookprice where id='{}' group by price order by price ASC LIMIT 15;".format(book.id))
+		picName = "prices.png"
+		dataFile = "datafile.dat"
+		with open(dataFile, "w") as d:
+			for (price, date) in output:
+				d.write("{} {}\n".format(formatTime(date), price))
+
+		command = """gnuplot -e "filename='{}'; datafile='{}'; myTitle='Past prices'" plots""".format(picName, dataFile, book.name)
+		out = subprocess.check_output(command, shell=True)
+		return picName
+	except Exception,e:
+		logger.exception(e)
+		logger.error("Error while plotting the image: {}".format(command))
+
 def notify(book):
 	previousPrice = execute("SELECT price from BookPrice where id = '{}' order by datetime(date) DESC LIMIT 1;".format(book.id))
 	if previousPrice:
@@ -56,15 +73,7 @@ def notify(book):
 			if change > 8:
 				pushMessage(book.name, "{}: from {} to {} \nChange of {:0.2f} %".format(
 						message, previousPrice, currentPrice, change))
-				pushMessage("Past Prices", "{}".format(pastPrices(book)))
-
-def pastPrices(book):
-	output = execute("select price, max(date) from bookprice where id='{}' group by price order by price ASC LIMIT 5;".format(book.id))
-	message = ""
-	for (price, date) in output:
-		message += ("{}: {}\n".format(formatTime(date), price))
-
-	return message
+				pushMessage("{}".format(book.name), file=plot(book))
 
 def textToImage(text):
 	from PIL import Image, ImageDraw
@@ -79,28 +88,34 @@ def textToImage(text):
 	img.save("foo.png")
 	return "foo.png"
 
+def getTweepy():
+	import tweepy
+	consumer_key = 'ipwbeVvBGXzaRr29nhmJSWvhD'
+	consumer_secret = 'hQ7u5MSJ9rSzYAlHVmGO3xF3YyxHg5o1nMSGj3CSiAA0UFNv8m'
+	access_token = '1010659086-wk48LIpu3PCghvnckTCjm01QrautNkr3B5VeOyZ'
+	access_token_secret = '5tJM0aSJenAaqMplSOYZM83UHMNtIhJXRTUfxGZx7CVQP'
+	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
+	auth.set_access_token(access_token, access_token_secret)
+	api = tweepy.API(auth)
+	return api
+
 def tweet(title, message):
 	try:
-		import tweepy
-		consumer_key = 'ipwbeVvBGXzaRr29nhmJSWvhD'
-		consumer_secret = 'hQ7u5MSJ9rSzYAlHVmGO3xF3YyxHg5o1nMSGj3CSiAA0UFNv8m'
-		access_token = '1010659086-wk48LIpu3PCghvnckTCjm01QrautNkr3B5VeOyZ'
-		access_token_secret = '5tJM0aSJenAaqMplSOYZM83UHMNtIhJXRTUfxGZx7CVQP'
-		auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
-		auth.set_access_token(access_token, access_token_secret)
-		api = tweepy.API(auth)
-
+		api = getTweepy()
 		if len(title + message) < 160:
 			# prioritize message over title
 			if len(title) > 130 - len(message):
 				title = title[0: 130 - len(message)] + "..."
 			api.update_status("{}\n{}".format(title, message))
 		else:
-			message = "{}\n{}".format(title, message)
-			img = textToImage(message)
-			api.update_with_media(img, status="Img")
+			logger.error("Can't tweet more than 140 chars")
+
 	except Exception, e:
 		logger.exception(e)
+
+def tweetFile(title, file):
+	api = getTweepy()
+	api.update_with_media(file, status=title)
 
 def pushBullet(title, message):
 	try:
@@ -113,10 +128,13 @@ def pushBullet(title, message):
 	except Exception, e:
 		logger.exception(e)
 
-def pushMessage(title, message):
-	logger.info("{}\n{}".format(title, message))
-	pushBullet(title, message)
-	tweet(title, message)
+def pushMessage(title, message=None, file=None):
+	if file:
+		tweetFile(title, file)
+	if message:
+		logger.info("{}\n{}".format(title, message))
+		pushBullet(title, message)
+		tweet(title, message)
 
 class Book:
 	def __init__(self, name, price, address):
@@ -241,11 +259,12 @@ def notifyPrices():
 if __name__ == '__main__':
 	createTable()
 	#tweet("foo\n"*80, "bar")
-	#tweet("foo\nfoo", "bar")
+	#tweet("foo\n", "@sharanmh31")
 	#textToImage("foo\nbar")
 	#notify()
-	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; print pastPrices(addattr)
-	#print pushMessage("Past prices", pastPrices(addattr))
+	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; addattr.name = "Foo"; print plot(addattr)
+	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; addattr.price = "20"; addattr.name = "Foo"; notify(addattr)
+	#print pushMessage("Past prices", file=plot(addattr))
 	#print formatTime("2017-08-31 15:10:43.275887")
 	#pushMessage("foo", "car")
 	cli()
