@@ -54,13 +54,14 @@ def plot(book):
 		logger.exception(e)
 		logger.error("Error while plotting the image: {}".format(command))
 
-def notify(book):
-	previousPrice = execute("SELECT price from BookPrice where id = '{}' order by datetime(date) DESC LIMIT 1;".format(book.id))
-	if previousPrice:
-		[(previousPrice, )] = previousPrice
+def notifyIfChange(book):
+	output = execute("SELECT price from BookPrice where id = '{}' order by datetime(date) DESC LIMIT 2;".format(book.id))
+	if output:
+		(currentPrice, ) = output[0]
+		(previousPrice, ) = output[1]
 
 		previousPrice = float(previousPrice)
-		currentPrice = float(book.price)
+		currentPrice = float(currentPrice)
 
 		if currentPrice != previousPrice:
 			if currentPrice < previousPrice:
@@ -70,23 +71,11 @@ def notify(book):
 
 			change = (abs(currentPrice - previousPrice) * 100 )/previousPrice
 			logger.info("Price change of {} seen for {}\n".format(change, book.name))
-			if change > 8:
-				pushMessage(book.name, "{}: from {} to {} \nChange of {:0.2f} %".format(
-						message, previousPrice, currentPrice, change))
-				pushMessage("{}".format(book.name), file=plot(book))
-
-def textToImage(text):
-	from PIL import Image, ImageDraw
-	img = Image.new('RGB', (400, 400))
-	d = ImageDraw.Draw(img)
-
-	y, x = 0, 0
-	for line in text.splitlines():
-		d.text((x,y), line, fill=(255, 0, 0))
-		y = y + 10
-
-	img.save("foo.png")
-	return "foo.png"
+			if change > 5:
+				pushMessage(book.name,
+							message = "{}: from {} to {} \nChange of {:0.2f} %".format(
+									  message, previousPrice, currentPrice, change),
+							file=plot(book))
 
 def getTweepy():
 	import tweepy
@@ -99,42 +88,43 @@ def getTweepy():
 	api = tweepy.API(auth)
 	return api
 
-def tweet(title, message):
+def formatTweet(title, message):
+	if len(title + message) > 160:
+		raise Exception("Can't tweet more than 140 chars {}".format(title+message))
+
+	# prioritize message over title
+	if len(title) > 130 - len(message):
+		title = title[0: 130 - len(message)] + "..."
+
+	return "{}\n{}".format(title, message)
+
+def tweet(title, message, file=None):
 	try:
 		api = getTweepy()
-		if len(title + message) < 160:
-			# prioritize message over title
-			if len(title) > 130 - len(message):
-				title = title[0: 130 - len(message)] + "..."
-			api.update_status("{}\n{}".format(title, message))
+
+		status = formatTweet(title, message)
+		if file:
+			api.update_with_media(file, status)
 		else:
-			logger.error("Can't tweet more than 140 chars")
+			api.update_status(status)
 
 	except Exception, e:
 		logger.exception(e)
-
-def tweetFile(title, file):
-	api = getTweepy()
-	api.update_with_media(file, status=title)
 
 def pushBullet(title, message):
 	try:
 		from pushbullet.pushbullet import PushBullet
 		apiKey = "o.mKznlsIJB18uq6qArGrl2AOPU2KbISsR"
 		p = PushBullet(apiKey)
-		# Get a list of devices
 		devices = p.getDevices()
 		p.pushNote(devices[0]["iden"], title, message)
 	except Exception, e:
 		logger.exception(e)
 
 def pushMessage(title, message=None, file=None):
-	if file:
-		tweetFile(title, file)
-	if message:
-		logger.info("{}\n{}".format(title, message))
-		pushBullet(title, message)
-		tweet(title, message)
+	logger.info("{}\n{}".format(title, message))
+	pushBullet(title, message)
+	tweet(title, message, file)
 
 class Book:
 	def __init__(self, name, price, address):
@@ -236,8 +226,8 @@ def updatePrices():
 	for (address, ) in output:
 		book = getBookInfo(address)
 		if book:
-			notify(book)
 			insertBookPrice(book.id, book.price, datetime.datetime.now())
+			notifyIfChange(book)
 			logger.debug("{} {} {}".format(book.id, book.name, book.address))
 
 @cli.command()
@@ -263,7 +253,7 @@ if __name__ == '__main__':
 	#textToImage("foo\nbar")
 	#notify()
 	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; addattr.name = "Foo"; print plot(addattr)
-	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; addattr.price = "20"; addattr.name = "Foo"; notify(addattr)
+	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.price = "20"; addattr.name = "Foo"; notifyIfChange(addattr)
 	#print pushMessage("Past prices", file=plot(addattr))
 	#print formatTime("2017-08-31 15:10:43.275887")
 	#pushMessage("foo", "car")
