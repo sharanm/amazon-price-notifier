@@ -36,11 +36,11 @@ def addattr():
 
 def formatTime(timeStr):
 	timeObj = datetime.datetime.strptime(timeStr, "%Y-%m-%d %H:%M:%S.%f")
-	return "{}-{}-{}".format(timeObj.day, timeObj.month, timeObj.year)
+	return "{}-{}-{}-{}".format(timeObj.hour, timeObj.day, timeObj.month, timeObj.year)
 
 def plot(book):
 	try:
-		output = execute("select price, max(date) from bookprice where id='{}' group by price order by price ASC LIMIT 15;".format(book.id))
+		output = execute("select price, min(date) from bookprice where id='{}' group by price order by price ASC LIMIT 15;".format(book.id))
 		picName = "prices.png"
 		dataFile = "datafile.dat"
 		with open(dataFile, "w") as d:
@@ -252,7 +252,7 @@ if __name__ == '__main__':
 	#tweet("foo\n", "@sharanmh31")
 	#textToImage("foo\nbar")
 	#notify()
-	#addattr.id = 'bc41ce4de9f74dc7a13ca9d8577ece61'; addattr.name = "Foo"; print plot(addattr)
+	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.name = "Foo"; plot(addattr)
 	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.price = "20"; addattr.name = "Foo"; notifyIfChange(addattr)
 	#print pushMessage("Past prices", file=plot(addattr))
 	#print formatTime("2017-08-31 15:10:43.275887")
