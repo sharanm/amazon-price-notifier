@@ -79,10 +79,10 @@ def notifyIfChange(book):
 
 def getTweepy():
 	import tweepy
-	consumer_key = 'ipwbeVvBGXzaRr29nhmJSWvhD'
-	consumer_secret = 'hQ7u5MSJ9rSzYAlHVmGO3xF3YyxHg5o1nMSGj3CSiAA0UFNv8m'
-	access_token = '1010659086-wk48LIpu3PCghvnckTCjm01QrautNkr3B5VeOyZ'
-	access_token_secret = '5tJM0aSJenAaqMplSOYZM83UHMNtIhJXRTUfxGZx7CVQP'
+	consumer_key = 'ujHhyrVsHNwBe72nCTX3l6YVN'
+	consumer_secret = 'vBxsNjNmMWFbkMrKrwMe7tPlbpBP7EgMAytFJD9biRFnN0OXYg'
+	access_token = '906104910457954304-KiXp8RvAqEIyliWC4CGMhyXlvWwGZKi'
+	access_token_secret = '1qPnFjpxl39vWJxvFigkFBXpRFXgi3yWG1gwLtk70krUO'
 	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 	auth.set_access_token(access_token, access_token_secret)
 	api = tweepy.API(auth)
