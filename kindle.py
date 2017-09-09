@@ -40,7 +40,8 @@ def formatTime(timeStr):
 
 def plot(book):
 	try:
-		output = execute("select price, min(date) from bookprice where id='{}' group by price order by price ASC LIMIT 15;".format(book.id))
+		sqlCommand = "select price, date from bookprice as d, (select max(date) as foo from bookprice where id='{}' group by datetime(date, 'start of day')) as f where d.date=f.foo;".format(book.id)
+		output = execute(sqlCommand)
 		picName = "prices.png"
 		dataFile = "datafile.dat"
 		with open(dataFile, "w") as d:
@@ -81,8 +82,8 @@ def getTweepy():
 	import tweepy
 	consumer_key = 'ujHhyrVsHNwBe72nCTX3l6YVN'
 	consumer_secret = 'vBxsNjNmMWFbkMrKrwMe7tPlbpBP7EgMAytFJD9biRFnN0OXYg'
-	access_token = '906104910457954304-KiXp8RvAqEIyliWC4CGMhyXlvWwGZKi'
-	access_token_secret = '1qPnFjpxl39vWJxvFigkFBXpRFXgi3yWG1gwLtk70krUO'
+	access_token = '906104910457954304-pZhFx583P6FYPGzpjap0cOB6Vmu1Lv0'
+	access_token_secret = '254er1OZtOhwNbSzw4mOiru6SqprOmGNKoYPpwPP61plW'
 	auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 	auth.set_access_token(access_token, access_token_secret)
 	api = tweepy.API(auth)
@@ -246,16 +247,23 @@ def notifyPrices():
 	for data in bookData:
 		pushMessage("Books", "".join(data))
 
+def messages():
+	tweepy = getTweepy()
+	statuses = tweepy.home_timeline(count=1)
+	for status in statuses:
+		print status.text, status.id
+
 if __name__ == '__main__':
 	createTable()
 	#tweet("foo\n"*80, "bar")
-	#tweet("foo\n", "@sharanmh31")
+	#tweet("foocar\n", "@sharanmh31")
 	#textToImage("foo\nbar")
 	#notify()
-	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.name = "Foo"; plot(addattr)
+	#addattr.id = '8e0e78a1a569d44d964f3052151d762f'; addattr.name = "Foo"; plot(addattr)
 	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.price = "20"; addattr.name = "Foo"; notifyIfChange(addattr)
 	#print pushMessage("Past prices", file=plot(addattr))
 	#print formatTime("2017-08-31 15:10:43.275887")
 	#pushMessage("foo", "car")
+	#messages()
 	cli()
 
