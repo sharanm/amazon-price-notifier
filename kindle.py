@@ -91,7 +91,7 @@ def getTweepy():
 
 def formatTweet(title, message):
 	if len(title + message) > 160:
-		raise Exception("Can't tweet more than 140 chars {}".format(title+message))
+		logger.debug("Shortening this message to 140 chars: {} {}".format(title, message))
 
 	# prioritize message over title
 	if len(title) > 130 - len(message):
@@ -262,6 +262,9 @@ if __name__ == '__main__':
 	#addattr.id = '8e0e78a1a569d44d964f3052151d762f'; addattr.name = "Foo"; plot(addattr)
 	#addattr.id = '34516a8862f0c841608e4ef1b350d543'; addattr.price = "20"; addattr.name = "Foo"; notifyIfChange(addattr)
 	#print pushMessage("Past prices", file=plot(addattr))
+	#print formatTweet("The Daily Stoic: 366 Meditations on Wisdom, Perseverance, and the Art of Living:"
+	#					 "Featuring new translations of Seneca, Epictetus, and Marcus Aurelius",
+    #				 "Price fall: from 341.32 to 315.4")
 	#print formatTime("2017-08-31 15:10:43.275887")
 	#pushMessage("foo", "car")
 	#messages()
