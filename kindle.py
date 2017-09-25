@@ -168,9 +168,9 @@ def createTable():
 
 	conn.close()
 
-def insertBookInfo(id, name, address):
+def insertBookInfo(id, name, address, date):
 	name = name.replace("'", "")
-	query = "INSERT or ignore INTO BookInfo (ID, NAME, ADDRESS) VALUES ('{}', '{}', '{}');".format(id, name, address)
+	query = "INSERT or REPLACE INTO BookInfo (ID, NAME, ADDRESS, DATE) VALUES ('{}', '{}', '{}', '{}');".format(id, name, address, date)
 	execute(query)
 
 def insertBookPrice(id, price, date):
@@ -195,7 +195,7 @@ def cli():
 def pruneList():
 	output = execute("select id, name from BookInfo;")
 	for (id, name) in output:
-		output = execute("select date from BookPrice where id = '{}' order by datetime(date) DESC LIMIT 1;".format(id))
+		output = execute("select date from BookInfo where id = '{}' order by datetime(date) DESC LIMIT 1;".format(id))
 		if output:
 			[(previousDate, )] = output
 			previousDate = datetime.datetime.strptime(previousDate, "%Y-%m-%d %H:%M:%S.%f")
@@ -213,7 +213,7 @@ def readList():
 		bookAddress = "{0}{1}".format("https://www.amazon.in/", book.find("a")["href"])
 		book = getBookInfo(bookAddress)
 		if book:
-			insertBookInfo(book.id, book.name, book.address)
+			insertBookInfo(book.id, book.name, book.address, datetime.datetime.now())
 			logger.debug("{} {} {}".format(book.id, book.name, book.address))
 	pruneList()
 
