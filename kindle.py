@@ -154,12 +154,6 @@ def getBookInfo(address):
 	except Exception, e:
 		logger.exception(e)
 
-def addBookInfoToDb(bookAddress):
-	book = getBookInfo(bookAddress)
-	if book:
-		insertBookInfo(book.id, book.name, book.address)
-		logger.debug("{} {} {}".format(book.id, book.name, book.address))
-
 def createTable():
 	conn = sqlite3.connect("main.db")
 	conn.execute('''CREATE TABLE if not exists BookInfo
@@ -217,7 +211,10 @@ def readList():
 	random.shuffle(books)
 	for book in books:
 		bookAddress = "{0}{1}".format("https://www.amazon.in/", book.find("a")["href"])
-		addBookInfoToDb(bookAddress)
+		book = getBookInfo(bookAddress)
+		if book:
+			insertBookInfo(book.id, book.name, book.address)
+			logger.debug("{} {} {}".format(book.id, book.name, book.address))
 	pruneList()
 
 @cli.command()
