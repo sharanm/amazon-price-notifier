@@ -190,7 +190,7 @@ def execute(query):
 		conn.commit()
 		return output
 	except Exception, e:
-		logger.exception(e)
+		logger.exception("Query '{}' resulted in exception {}".format(query, e))
 	finally:
 		conn.close()
 
