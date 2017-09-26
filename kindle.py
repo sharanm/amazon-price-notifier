@@ -72,7 +72,7 @@ def notifyIfChange(book):
 
 			change = (abs(currentPrice - previousPrice) * 100 )/previousPrice
 			logger.info("Price change of {} seen for {}\n".format(change, book.name))
-			if change > 5:
+			if change > 10:
 				pushMessage(book.name,
 							message = "{}: from {} to {} \nChange of {:0.2f} %".format(
 									  message, previousPrice, currentPrice, change),
