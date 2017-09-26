@@ -174,7 +174,8 @@ def insertBookInfo(id, name, address, date):
 	execute(query)
 
 def insertBookPrice(id, price, date):
-	query = "INSERT or ignore INTO BookPrice (ID,price,date)  VALUES ('{}', {}, '{}');".format(id, price, date)
+	price = price.replace(",", "")
+	query = "INSERT or ignore INTO BookPrice (ID,price,date)  VALUES ('{}', '{}', '{}');".format(id, price, date)
 	execute(query)
 
 def execute(query):
@@ -265,5 +266,6 @@ if __name__ == '__main__':
 	#print formatTime("2017-08-31 15:10:43.275887")
 	#pushMessage("foo", "car")
 	#messages()
+	#insertBookPrice("bdc6d832e1a4fe2d7414f9e493b9408e", "1,490.99", datetime.datetime.now())
 	cli()
 
