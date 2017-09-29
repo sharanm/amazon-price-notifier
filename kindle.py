@@ -200,7 +200,7 @@ def pruneList():
 		if output:
 			[(previousDate, )] = output
 			previousDate = datetime.datetime.strptime(previousDate, "%Y-%m-%d %H:%M:%S.%f")
-			if datetime.datetime.now() - previousDate > datetime.timedelta(days=2):
+			if datetime.datetime.now() - previousDate > datetime.timedelta(days=5):
 				logger.info("Removing the book {}".format(name))
 				execute("delete from BookInfo where id = '{}'".format(id))
 
