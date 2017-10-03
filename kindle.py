@@ -124,7 +124,7 @@ def pushBullet(title, message):
 
 def pushMessage(title, message=None, file=None):
 	logger.info("{}\n{}".format(title, message))
-	pushBullet(title, message)
+	#pushBullet(title, message)
 	tweet(title, message, file)
 
 class Book:
