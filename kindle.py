@@ -216,7 +216,7 @@ def readList():
 		if book:
 			insertBookInfo(book.id, book.name, book.address, datetime.datetime.now())
 			logger.debug("{} {} {}".format(book.id, book.name, book.address))
-	pruneList()
+	#pruneList()
 
 @cli.command()
 def updatePrices():
