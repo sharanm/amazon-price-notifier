@@ -122,7 +122,7 @@ def pushBullet(title, message):
 	except Exception, e:
 		logger.exception(e)
 
-def pushMessage(title, message=None, file=None):
+def pushMessage(title, message="", file=None):
 	logger.info("{}\n{}".format(title, message))
 	#pushBullet(title, message)
 	tweet(title, message, file)
@@ -208,14 +208,20 @@ def pruneList():
 def readList():
 	address = "https://www.amazon.in/gp/registry/wishlist/?ie=UTF8&cid=A3RDF2FMSIRJOT"
 	soup = BeautifulSoup(urllib.urlopen(address).read(), "lxml")
-	books = soup.findAll('span', {'class': "a-button a-button-seebuying"})
+	books = soup.findAll("a", {'class': "a-link-normal"})
+
+	if not books:
+		pushMessage("No book found. Wishlist parsing logic needs an update !!")
+
 	random.shuffle(books)
+
 	for book in books:
-		bookAddress = "{0}{1}".format("https://www.amazon.in/", book.find("a")["href"])
-		book = getBookInfo(bookAddress)
-		if book:
-			insertBookInfo(book.id, book.name, book.address, datetime.datetime.now())
-			logger.debug("{} {} {}".format(book.id, book.name, book.address))
+		if book.get("href") and book.get("title"):
+			bookAddress = "{0}{1}".format("https://www.amazon.in/", book["href"])
+			book = getBookInfo(bookAddress)
+			if book:
+				insertBookInfo(book.id, book.name, book.address, datetime.datetime.now())
+				logger.debug("{} {} {}".format(book.id, book.name, book.address))
 	#pruneList()
 
 @cli.command()
@@ -253,6 +259,7 @@ def messages():
 
 if __name__ == '__main__':
 	createTable()
+	#readList()
 	#tweet("foo\n"*80, "bar")
 	#tweet("foocar\n", "@sharanmh31")
 	#textToImage("foo\nbar")
