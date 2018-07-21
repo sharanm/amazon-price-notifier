@@ -159,7 +159,8 @@ def createTable():
 	conn.execute('''CREATE TABLE if not exists BookInfo
          (ID TEXT PRIMARY KEY UNIQUE,
          NAME           TEXT,
-         ADDRESS        TEXT);''')
+         ADDRESS        TEXT,
+	DATE		TEXT);''')
 
 	conn.execute('''CREATE TABLE if not exists BookPrice
          (ID TEXT KEY,
